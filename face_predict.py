@@ -1,7 +1,6 @@
 import face_recognition
 import cv2
 import numpy as np
-#from imutils.video import VideoStream
 import subprocess
 import sys
 
@@ -10,6 +9,9 @@ th = 0.5
 
 #名前指定
 my_name = 'masu'
+
+#カウンタ変数を定義
+cnt = 0
 
 # VideoStreamを使い、カメラの画像取り込み
 #video_capture = VideoStream(src=0).start()
@@ -37,7 +39,6 @@ face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_front
 
 while True:
     # カメラからframeを取得
-    #frame = video_capture.read()
     ret,frame = video_capture.read()
     print(frame)
  
@@ -79,15 +80,18 @@ while True:
             name = face_names[index]
         
         if name == 'UNKNOWN':
-            subprocess.run("./line_notify.sh")
-            path = "./static/cam_photo.jpg"
-            cv2.imwrite(path,frame)
-            print("データが保存されました")
-            cv2.destroyAllWindows()
-            #video_capture.stop()
-            video_capture.release()
-            subprocess.run("python app.py", shell=True)
-            sys.exit()
+            cnt += 1
+            if cnt > 7:
+                subprocess.run("./app_stop.sh")
+                subprocess.run("./line_notify.sh")
+                path = "./static/cam_photo.jpg"
+                cv2.imwrite(path,frame)
+                print("データが保存されました")
+                subprocess.run("python app.py", shell=True)
+                cnt = 0
+                cv2.destroyAllWindows()
+                video_capture.release()
+                sys.exit()
 
         # 枠を描画
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
